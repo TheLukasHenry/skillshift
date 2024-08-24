@@ -1,3 +1,7 @@
+'use client'
+
+import 'regenerator-runtime/runtime'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -6,10 +10,36 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Mic } from 'lucide-react'
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from 'react-speech-recognition'
+import SpeechToText from '@/components/SpeechToText'
 
-export default function Home() {
+export default function Component() {
+  const [isListening, setIsListening] = useState(false)
+  const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
+    useSpeechRecognition()
+
+  useEffect(() => {
+    if (!browserSupportsSpeechRecognition) {
+      alert(
+        "Your browser doesn't support speech recognition. Please try a different browser."
+      )
+    }
+  }, [browserSupportsSpeechRecognition])
+
+  const handleListen = () => {
+    if (isListening) {
+      SpeechRecognition.stopListening()
+      setIsListening(false)
+    } else {
+      resetTranscript()
+      SpeechRecognition.startListening({ continuous: true })
+      setIsListening(true)
+    }
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-gray-100">
       <Card className="w-full max-w-md bg-gray-800 text-gray-100">
@@ -28,17 +58,37 @@ export default function Home() {
             <li>Your hobbies and interests</li>
             <li>What you want to learn or become</li>
           </ul>
-          <div className="flex items-center space-x-2">
-            <Input
-              className="flex-grow bg-gray-700 text-gray-100 border-gray-600 focus:border-green-500"
-              placeholder="Start talking about yourself..."
-              disabled
-            />
-            <Button size="icon" className="bg-green-500 hover:bg-green-600">
-              <Mic className="h-6 w-6" />
-              <span className="sr-only">Start recording</span>
-            </Button>
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative w-full">
+              <Button
+                size="lg"
+                className={`bg-green-500 hover:bg-green-600 p-6 rounded-full ${
+                  isListening ? 'animate-pulse' : ''
+                }`}
+                onClick={handleListen}
+                aria-label={isListening ? 'Stop recording' : 'Start recording'}
+              >
+                <Mic className="h-8 w-8" />
+              </Button>
+              {isListening && (
+                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-1 h-8 bg-green-500 rounded-full animate-wave"
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="w-full mt-8 p-4 bg-gray-700 rounded-md min-h-[100px] max-h-[200px] overflow-y-auto">
+              <p className="text-gray-300">
+                {transcript || 'Your speech will appear here...'}
+              </p>
+            </div>
           </div>
+          <SpeechToText />
         </CardContent>
       </Card>
     </main>
