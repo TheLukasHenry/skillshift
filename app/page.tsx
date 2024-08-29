@@ -14,7 +14,7 @@ import { Mic } from 'lucide-react'
 import SpeechRecognition, {
   useSpeechRecognition,
 } from 'react-speech-recognition'
-import SpeechToText from '@/components/SpeechToText'
+// import MicrophoneComponent from '@/components/SpeechToText'
 
 export default function Component() {
   const [isListening, setIsListening] = useState(false)
@@ -88,7 +88,7 @@ export default function Component() {
               </p>
             </div>
           </div>
-          <SpeechToText />
+          {/* <MicrophoneComponent /> */}
         </CardContent>
       </Card>
     </main>
