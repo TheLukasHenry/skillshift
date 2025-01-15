@@ -1,7 +1,6 @@
 'use client'
-
 import 'regenerator-runtime/runtime'
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -16,19 +15,12 @@ import SpeechRecognition, {
 } from 'react-speech-recognition'
 
 export default function Component() {
-  const {
-    transcript,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-    interimTranscript,
-    finalTranscript,
-    listening,
-    isMicrophoneAvailable,
-  } = useSpeechRecognition()
+  const [isListening, setIsListening] = useState(false)
+  const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
+    useSpeechRecognition()
 
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
-      console.error("Browser doesn't support speech recognition.")
       alert(
         "Your browser doesn't support speech recognition. Please try a different browser."
       )
@@ -36,42 +28,18 @@ export default function Component() {
   }, [browserSupportsSpeechRecognition])
 
   const handleListen = () => {
-    console.log('handleListen called')
-    if (listening) {
-      console.log('Stopping listening')
+    if (isListening) {
       SpeechRecognition.stopListening()
+      setIsListening(false)
     } else {
-      console.log('Starting listening')
       resetTranscript()
-      SpeechRecognition.startListening({
-        continuous: true,
-        interimResults: true,
-      })
+      SpeechRecognition.startListening({ continuous: true })
+      setIsListening(true)
     }
   }
 
-  useEffect(() => {
-    console.log('Transcript updated:', transcript)
-  }, [transcript])
-
-  useEffect(() => {
-    console.log('Interim Transcript updated:', interimTranscript)
-  }, [interimTranscript])
-
-  useEffect(() => {
-    console.log('Final Transcript updated:', finalTranscript)
-  }, [finalTranscript])
-
-  useEffect(() => {
-    console.log('Listening state changed:', listening)
-  }, [listening])
-
-  useEffect(() => {
-    console.log('Microphone availability changed:', isMicrophoneAvailable)
-  }, [isMicrophoneAvailable])
-
   return (
-    <main className="flex h-screen flex-col items-center bg-gray-100 ">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-gray-100">
       <Card className="w-full max-w-md bg-gray-800 text-gray-100">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center text-green-500">
@@ -93,14 +61,14 @@ export default function Component() {
               <Button
                 size="lg"
                 className={`bg-green-500 hover:bg-green-600 p-6 rounded-full ${
-                  listening ? 'animate-pulse' : ''
+                  isListening ? 'animate-pulse' : ''
                 }`}
                 onClick={handleListen}
-                aria-label={listening ? 'Stop recording' : 'Start recording'}
+                aria-label={isListening ? 'Stop recording' : 'Start recording'}
               >
                 <Mic className="h-8 w-8" />
               </Button>
-              {listening && (
+              {isListening && (
                 <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-1">
                   {[...Array(3)].map((_, i) => (
                     <div
@@ -115,10 +83,6 @@ export default function Component() {
             <div className="w-full mt-8 p-4 bg-gray-700 rounded-md min-h-[100px] max-h-[200px] overflow-y-auto">
               <p className="text-gray-300">
                 {transcript || 'Your speech will appear here...'}
-              </p>
-              <p className="text-gray-300">{finalTranscript}</p>
-              <p className="text-gray-300">
-                {SpeechRecognition.getRecognition()?.lang}
               </p>
             </div>
           </div>

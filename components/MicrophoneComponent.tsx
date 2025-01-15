@@ -1,110 +1,138 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import SpeechRecognition, {
   useSpeechRecognition,
 } from 'react-speech-recognition'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Mic, Square } from 'lucide-react'
 
-export default function MicrophoneComponent() {
+export default function Component() {
   const [isRecording, setIsRecording] = useState(false)
-  const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
-    useSpeechRecognition()
+  const [isAnimating, setIsAnimating] = useState(false)
+  const {
+    transcript,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+    listening,
+  } = useSpeechRecognition()
 
-  if (!browserSupportsSpeechRecognition) {
-    console.error('Browser does not support speech recognition.')
-    return <span>Browser doesn't support speech recognition.</span>
-  }
+  useEffect(() => {
+    setIsAnimating(listening)
+  }, [listening])
 
-  const startRecording = () => {
-    console.log('Start recording')
-    setIsRecording(true)
+  const startRecording = useCallback(() => {
     resetTranscript()
-    try {
-      SpeechRecognition.startListening({ continuous: true })
-    } catch (error) {
+    setIsRecording(true)
+    SpeechRecognition.startListening({ continuous: true }).catch((error) => {
       console.error('Error starting speech recognition:', error)
-    }
-  }
+      setIsRecording(false)
+    })
+  }, [resetTranscript])
 
-  const stopRecording = () => {
-    console.log('Stop recording')
+  const stopRecording = useCallback(() => {
     setIsRecording(false)
-    try {
-      SpeechRecognition.stopListening()
-    } catch (error) {
+    SpeechRecognition.stopListening().catch((error) => {
       console.error('Error stopping speech recognition:', error)
-    }
-  }
+    })
+  }, [])
 
-  const handleToggleRecording = () => {
-    console.log('Toggle recording')
+  const handleToggleRecording = useCallback(() => {
     if (!isRecording) {
       startRecording()
     } else {
       stopRecording()
     }
+  }, [isRecording, startRecording, stopRecording])
+
+  if (!browserSupportsSpeechRecognition) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-gray-100">
+        <p>Browser doesn&apos;t support speech recognition.</p>
+      </div>
+    )
   }
 
   return (
-    <div className="flex items-center justify-center h-screen w-full">
-      <div className="w-full">
-        {(isRecording || transcript) && (
-          <div className="w-1/4 m-auto rounded-md border p-4 bg-white">
-            <div className="flex-1 flex w-full justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  {isRecording ? 'Recording' : 'Recorded'}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {isRecording ? 'Start speaking...' : 'Thanks for talking.'}
-                </p>
-              </div>
-              {isRecording && (
-                <div className="rounded-full w-4 h-4 bg-red-400 animate-pulse" />
-              )}
-            </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-900 p-4">
+      <Card className="w-full max-w-md bg-gray-800 text-gray-100">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center text-green-500">
+            Skill Shift
+          </CardTitle>
+          <CardDescription className="text-center text-gray-400">
+            Discover your path to new skills and careers
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <p className="mb-2 text-center">
+              Tell us about yourself, including:
+            </p>
+            <ul className="list-disc list-inside text-gray-300">
+              <li>What you do for work now</li>
+              <li>Your hobbies and interests</li>
+              <li>What you want to learn or become</li>
+            </ul>
+          </div>
 
-            {transcript && (
-              <div className="border rounded-md p-2 h-full mt-4">
-                <p className="mb-0">{transcript}</p>
+          <div className="flex flex-col items-center space-y-4">
+            <Button
+              size="lg"
+              className={`p-6 rounded-full ${
+                isRecording
+                  ? 'bg-red-500 hover:bg-red-600'
+                  : 'bg-green-500 hover:bg-green-600'
+              }`}
+              onClick={handleToggleRecording}
+            >
+              {isRecording ? (
+                <Square className="h-8 w-8" />
+              ) : (
+                <Mic className="h-8 w-8" />
+              )}
+              <span className="sr-only">
+                {isRecording ? 'Stop recording' : 'Start recording'}
+              </span>
+            </Button>
+
+            {isAnimating && (
+              <div className="flex space-x-1">
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 h-8 bg-green-500 rounded-full animate-wave"
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                  />
+                ))}
               </div>
             )}
           </div>
-        )}
 
-        <div className="flex items-center w-full">
-          {isRecording ? (
-            <button
-              onClick={handleToggleRecording}
-              className="mt-10 m-auto flex items-center justify-center bg-red-400 hover:bg-red-500 rounded-full w-20 h-20 focus:outline-none"
-            >
-              <svg
-                className="h-12 w-12"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path fill="white" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-              </svg>
-            </button>
-          ) : (
-            <button
-              onClick={handleToggleRecording}
-              className="mt-10 m-auto flex items-center justify-center bg-blue-400 hover:bg-blue-500 rounded-full w-20 h-20 focus:outline-none"
-            >
-              <svg
-                viewBox="0 0 256 256"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-12 h-12 text-white"
-              >
-                <path
-                  fill="currentColor"
-                  d="M128 176a48.05 48.05 0 0 0 48-48V64a48 48 0 0 0-96 0v64a48.05 48.05 0 0 0 48 48ZM96 64a32 32 0 0 1 64 0v64a32 32 0 0 1-64 0Zm40 143.6V232a8 8 0 0 1-16 0v-24.4A80.11 80.11 0 0 1 48 128a8 8 0 0 1 16 0a64 64 0 0 0 128 0a8 8 0 0 1 16 0a80.11 80.11 0 0 1-72 79.6Z"
-                />
-              </svg>
-            </button>
+          {(isRecording || transcript) && (
+            <div className="mt-4 p-4 bg-gray-700 rounded-md">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-sm font-medium">
+                  {isRecording ? 'Recording' : 'Recorded'}
+                </p>
+                {isRecording && (
+                  <div className="rounded-full w-3 h-3 bg-red-500 animate-pulse" />
+                )}
+              </div>
+              <p className="text-gray-300 min-h-[100px] max-h-[200px] overflow-y-auto">
+                {transcript || 'Your speech will appear here...'}
+              </p>
+            </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
